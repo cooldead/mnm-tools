@@ -9,10 +9,33 @@
 const fs = require('fs');
 const path = require('path');
 
-const GAME_BASE = path.join(
-  process.env.USERPROFILE || '',
-  'AppData', 'LocalLow', 'Niche Worlds Cult', 'Monsters and Memories'
-);
+const GAME_SUBDIR = path.join('AppData', 'LocalLow', 'Niche Worlds Cult', 'Monsters and Memories');
+
+// Where the game writes Player.log + Ledger files. On Windows that's the user
+// profile; on Linux the game runs under Wine/Proton, so it's inside a prefix's
+// drive_c — try the known launchers' prefixes and use the first that exists.
+// MNM_GAME_DIR overrides everything (point it at the "Monsters and Memories" folder).
+function findGameBase() {
+  if (process.env.MNM_GAME_DIR) return process.env.MNM_GAME_DIR;
+  if (process.platform === 'win32') return path.join(process.env.USERPROFILE || '', GAME_SUBDIR);
+  const home = require('os').homedir();
+  const inPrefix = (pfx) => path.join(pfx, 'drive_c', 'users', 'steamuser', GAME_SUBDIR);
+  const prefixes = [
+    process.env.MNM_WINEPREFIX,                          // official launcher override
+    path.join(home, '.local/share/mnm/mnm/pfx'),         // official Linux launcher (umu-run)
+  ];
+  // Steam (incl. a non-Steam shortcut run through Proton): any compatdata prefix
+  for (const steam of ['.local/share/Steam', '.steam/steam', '.var/app/com.valvesoftware.Steam/.local/share/Steam']) {
+    const cd = path.join(home, steam, 'steamapps', 'compatdata');
+    try { for (const id of fs.readdirSync(cd)) prefixes.push(path.join(cd, id, 'pfx')); } catch {}
+  }
+  const candidates = prefixes.filter(Boolean).map(inPrefix);
+  // Plain Wine prefixes use the login name instead of "steamuser"
+  candidates.push(path.join(process.env.WINEPREFIX || path.join(home, '.wine'), 'drive_c', 'users', require('os').userInfo().username, GAME_SUBDIR));
+  return candidates.find((d) => fs.existsSync(d)) || candidates[0];
+}
+
+const GAME_BASE = findGameBase();
 
 // Many ledger string fields are base64 (not encryption) — mob/zone/player names
 function b64(s) {

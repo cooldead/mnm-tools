@@ -544,10 +544,7 @@ app.on('will-quit', () => globalShortcut.unregisterAll());
 // MnM's Unity log records zone changes ("Start zoning process to <zone>").
 // Poll for appended lines and tell the renderer when the player zones.
 
-const GAME_LOG = path.join(
-  process.env.USERPROFILE || '',
-  'AppData', 'LocalLow', 'Niche Worlds Cult', 'Monsters and Memories', 'Player.log'
-);
+const GAME_LOG = path.join(ledgerParser.GAME_BASE, 'Player.log');
 
 let lastGameZone = null;
 

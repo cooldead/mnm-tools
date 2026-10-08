@@ -12,6 +12,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win --config.asar=false",
+    "dist:linux": "electron-builder --linux AppImage --config.asar=false",
     "release": "node scripts/release.js"
   },
   "devDependencies": {
@@ -35,11 +36,21 @@
     "win": {
       "target": "nsis"
     },
+    "linux": {
+      "target": "AppImage",
+      "category": "Game",
+      "icon": "build/icon.png",
+      "synopsis": "Map and marker companion for Monsters & Memories",
+      "artifactName": "MnM-Map-${version}.${ext}"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "MnM-Map-Setup-${version}.${ext}"
     }
+  },
+  "allowScripts": {
+    "electron@32.3.3": true
   }
 }
